@@ -4,6 +4,9 @@ import android.Manifest
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.Rect
 import android.os.Bundle
 import android.util.Log
@@ -166,7 +169,6 @@ class OcrActivity : AppCompatActivity() {
         btnPauseResume.text = "Pause"
     }
 
-
     @OptIn(ExperimentalGetImage::class)
     private fun processImageProxy(imageProxy: ImageProxy) {
         val mediaImage = imageProxy.image
@@ -180,12 +182,20 @@ class OcrActivity : AppCompatActivity() {
                 .addOnSuccessListener { visionText ->
                     val bitmap = imageProxy.toBitmap()
 
-                    // กำหนดพื้นที่ของ bitmap ที่จะเน้น
+                    // กำหนดพื้นที่ของ bitmap ที่จะเน้นให้ตรงกับการคำนวณใน onDraw
+                    val rectHeight = bitmap.height / 7f
+                    val top = (bitmap.height - rectHeight) / 2f + (bitmap.height * 0.17f)
+                    val bottom = top + rectHeight
+
+                    // กำหนดขอบซ้ายและขอบขวาของพื้นที่โฟกัสให้ตรงกับ onDraw
+                    val leftMargin = bitmap.width * 0.22f
+                    val rightMargin = bitmap.width * 0.457f
+
                     val focusArea = Rect(
-                        (bitmap.width * 0.1f).toInt(),
-                        ((bitmap.height - (bitmap.height / 4f)) * 2 / 3f).toInt(),
-                        (bitmap.width * 0.9f).toInt(),
-                        (((bitmap.height - (bitmap.height / 4f)) * 2 / 3f) + (bitmap.height / 4f) + (bitmap.height * 0.1f)).toInt()
+                        leftMargin.toInt(),
+                        top.toInt(),
+                        (bitmap.width - rightMargin).toInt(),
+                        bottom.toInt()
                     )
 
                     // กรองข้อความในพื้นที่เน้นและดึงเฉพาะตัวเลข
@@ -216,11 +226,6 @@ class OcrActivity : AppCompatActivity() {
         }
     }
 
-
-
-
-
-
     private fun filterTextInFocusArea(
         visionText: com.google.mlkit.vision.text.Text,
         focusArea: Rect
@@ -235,7 +240,6 @@ class OcrActivity : AppCompatActivity() {
                 }
             }
         }
-
         return stringBuilder.toString()
     }
 
@@ -255,8 +259,12 @@ class OcrActivity : AppCompatActivity() {
             // ลบอักขระที่ไม่ใช่ตัวเลขและจุดทศนิยมออก
             val cleanedWord = word.replace(Regex("[^0-9.]"), "")
             // ตรวจสอบว่าคำที่ถูกลบอักขระแล้วเป็นตัวเลขที่ถูกต้องหรือไม่
-            if (cleanedWord.matches(Regex("^\\d+(\\.\\d+)?$")) && cleanedWord.length <= 6 && !cleanedWord.matches(Regex("\\d{1,2}/\\d{1,2}/\\d{2,4}"))) {
-                result.add(cleanedWord)
+            if (cleanedWord.matches(Regex("^\\d+(\\.\\d+)?$"))) {
+                val parts = cleanedWord.split(".")
+                // ตรวจสอบว่าจำนวนเต็มมีไม่เกิน 6 หลัก
+                if (parts[0].length <= 6 && !cleanedWord.matches(Regex("\\d{1,2}/\\d{1,2}/\\d{2,4}"))) {
+                    result.add(cleanedWord)
+                }
             }
         }
         return result
@@ -321,9 +329,10 @@ class OcrActivity : AppCompatActivity() {
     private fun updateExchangeRateUI(rate: Double, currencyFrom: String, currencyTo: String) {
         val convertedAmount = ocrNumber * rate
         runOnUiThread {
-            ocrResult.text = "$ocrNumber $currencyFrom = ${String.format("%.2f", convertedAmount)} $currencyTo"
+            ocrResult.text = String.format("%,.2f %s = %,.2f %s", ocrNumber, currencyFrom, convertedAmount, currencyTo)
         }
     }
+
     private fun saveExchangeRatesToCache(rates: Map<String, Double>) {
         val editor = sharedPreferences.edit()
         editor.putString(KEY_EXCHANGE_RATES, Gson().toJson(rates))
@@ -386,6 +395,7 @@ class OcrActivity : AppCompatActivity() {
             }
         }
     }
+
     // ทำปุ่มสลับค่าเงิน
     private fun swapCurrencies() {
         val tempCurrencyFrom = selectedCurrencyFrom

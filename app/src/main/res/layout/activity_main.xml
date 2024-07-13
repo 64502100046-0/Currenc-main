@@ -12,6 +12,19 @@
         android:inputType="numberDecimal"
         android:layout_marginBottom="16dp"/>
 
+
+
+
+    <Button
+        android:id="@+id/convertButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Convert"
+        android:layout_below="@id/toCurrencySpinner"
+        android:layout_marginBottom="16dp"
+        android:layout_centerHorizontal="true"/>
+
+
     <Spinner
         android:id="@+id/fromCurrencySpinner"
         android:layout_width="match_parent"
@@ -24,19 +37,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/fromCurrencySpinner"
+
         android:layout_marginBottom="16dp"/>
 
     <Button
-        android:id="@+id/convertButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Convert"
-        android:layout_below="@id/toCurrencySpinner"
-        android:layout_marginBottom="16dp"
-        android:layout_centerHorizontal="true"/>
-
-    <Button
         android:id="@+id/swapButton"
+        android:layout_marginTop="500dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Swap" />
